@@ -1,6 +1,4 @@
-/**
-hus-dashboard — sotkanet-demo (hus)
-*/
+## hus-dashboard — sotkanet-demo (hus)
 
 Yleiskuvaus
 - kevyt next.js-sovellus (app router), joka hakee kolmen sotkanet‑indikaattorin aikasarjat ja näyttää ne hus‑alueelta (id 629).
@@ -48,4 +46,5 @@ Viittaukset
   3) Hoitohenkilökunnan influenssarokotuskattavuus erikoissairaanhoidossa (ID 5358)
 
 Kuvakaappaus
-- placeholder
+- <img width="1671" height="1049" alt="Screenshot 2025-08-04 at 10 28 22" src="https://github.com/user-attachments/assets/d00d36b9-c65e-4da5-a435-bf232d1fafcc" />
+
