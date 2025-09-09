@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+/**
+hus-dashboard — sotkanet-demo (hus)
+*/
 
-## Getting Started
+Yleiskuvaus
+- kevyt next.js-sovellus (app router), joka hakee kolmen sotkanet‑indikaattorin aikasarjat ja näyttää ne hus‑alueelta (id 629).
+- käyttöliittymä on suomeksi, käyttäjä valitsee yhden indikaattorin kerrallaan.
+- esitys: viivakaavio, pari kpi-korttia ja taulukko. virheet ja puuttuva data käsitellään mahdollisimman agnostisesti ja siististi.
 
-First, run the development server:
+Ajaminen
+- vaatimus: node 20+
+- asennus: `npm i`
+- kehitys: `npm run dev` ja selaimella http://localhost:3000
+- "tuotanto": `npm run build && npm start`
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Stäkki
+- next.js 15 (app router) + typescript, oma valintani käytännössä kaikkeen verkkokehitykseen laajan tuen ja yhteisön sekä kattavien ominaisuuksien takia.
+- shadcn komponentit, yksinkertainen ja helppo, sekä omaan makuuni sopivan minimalistinen ja mielikuvitukseton komponenttikirjasto.
+- recharts kaaviota varten (shadcn chart‑kääreet), ns. shadcn natiivit kaaviot.
+- node ja npm valittu pitkälti laajan tuen takia, suosin itse pnpm ja bun runtimejä mutten halunnut lisätä ylimääräisiä riippuvuuksia tähän projektiin.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Käytetyt indikaattorit
+- 5070 — Päivystyskäynnit erikoissairaanhoidossa 75 vuotta täyttäneillä / 1 000 vastaavan ikäistä
+- 5342 — Lonkkamurtumapotilaat, jotka on leikattu 0–2 päivän kuluessa sairaalaan tulosta, % (vakioimaton)
+- 5358 — Hoitohenkilökunnan influenssarokotuskattavuus erikoissairaanhoidossa
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Datan hakeminen
+- metadata: `/api/sotkanet/metadata/:id` (otsikko, vuosialue, desimaalit, arvo‑yksikkö)
+- aikasarja: `/api/sotkanet/series?indicator=ID&start=YYYY&end=YYYY&gender=total` (puuttuvat vuodet → null)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Käyttö
+- valinta ylhäällä, oletuksena ensimmäinen indikaattori.
+- kaavio näyttää joko arvon tai absoluuttisen arvon (yläpalkin painike). arvon desimaalit tulevat metadatasta, absoluuttinen on kokonaisluku.
+- puuttuvat vuodet näkyvät katkoksina kaaviossa ja viivoina taulukossa.
 
-## Learn More
+Oletukset ja rajaukset
+- sukupuoli lukittu arvoon `total` yksinkertaisuuden vuoksi.
+- vuodet = metadatan range.start..range.end.
+- pieni next.js api‑kerros (välttää cors/online‑rajoitteet ja suodattaa hus‑alueen palvelimella).
+- en kirjoittanut testejä, pidin riippuvuudet minimissä. jos tätä jatkettaisiin, aloittaisin unit testeillä sarjamuunnoksille (lib/series.ts) ja kevyellä apin mockatulla vastauksella.
+- kontitus tai starttiskriptien kirjoittaminen mielestäni tarpeetonta näin yksinkertaiseen repoon.
 
-To learn more about Next.js, take a look at the following resources:
+Viittaukset
+- tietolähde: Sotkanet / THL (Creative Commons Attribution 4.0, http://www.sotkanet.fi/)
+- käytetyt indikaattorit:
+  1) Päivystyskäynnit erikoissairaanhoidossa 75 vuotta täyttäneillä / 1 000 vastaavan ikäistä (ID 5070)
+  2) Lonkkamurtumapotilaat, jotka on leikattu 0–2 päivän kuluessa sairaalaan tulosta, % (vakioimaton) (ID 5342)
+  3) Hoitohenkilökunnan influenssarokotuskattavuus erikoissairaanhoidossa (ID 5358)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Kuvakaappaus
+- placeholder

@@ -1,103 +1,147 @@
-import Image from "next/image";
+"use client";
+import * as React from "react";
+import { SiteHeader } from "@/components/site-header";
+import { IndicatorSelect } from "@/components/indicator-select";
+import { ChartAreaInteractive } from "@/components/chart-area-interactive";
+import { IndicatorKpis } from "@/components/indicator-kpis";
+import { SeriesTable } from "@/components/series-table";
+import { AppFooter } from "@/components/app-footer";
 
-export default function Home() {
+type MetaPayload = {
+  id: number;
+  titleFi: string;
+  range: { start: number; end: number };
+  decimals: number;
+  primaryValueTypeFi: string;
+  primaryValueTypeCode: string;
+  updated: string | null;
+};
+
+type SeriesPayload = {
+  indicator: number;
+  region: number;
+  gender: string;
+  start: number;
+  end: number;
+  series: { year: number; primaryValue: number | null; absoluteValue: number | null }[];
+};
+
+const INDICATOR_IDS = [5070, 5342, 5358] as const;
+
+export default function Page() {
+  const [metas, setMetas] = React.useState<MetaPayload[]>([]);
+  const [selectedId, setSelectedId] = React.useState<number>(INDICATOR_IDS[0]);
+  const [series, setSeries] = React.useState<SeriesPayload | null>(null);
+  const [yMode, setYMode] = React.useState<"primary" | "absolute">("primary");
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  // fetch metadata for all indicators on mount
+  React.useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const res = await Promise.all(
+          INDICATOR_IDS.map((id) => fetch(`/api/sotkanet/metadata/${id}`).then((r) => r.json()))
+        );
+        if (!isMounted) return;
+        setMetas(res as MetaPayload[]);
+      } catch {
+        if (!isMounted) return;
+        setError("virhe metadatan haussa");
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // fetch series when selection changes or metas are ready
+  React.useEffect(() => {
+    if (!metas.length) return;
+    let isMounted = true;
+    (async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const meta = metas.find((m) => m.id === selectedId)!;
+        const res = await fetch(
+          `/api/sotkanet/series?indicator=${selectedId}&start=${meta.range.start}&end=${meta.range.end}&gender=total`
+        );
+        const json = (await res.json()) as SeriesPayload | { error: string };
+        if (!isMounted) return;
+        if (!("series" in json)) {
+          setError("virhe datan haussa");
+          setSeries(null);
+        } else {
+          setSeries(json);
+        }
+      } catch {
+        if (isMounted) setError("virhe datan haussa");
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedId, metas]);
+
+  const selectedMeta = metas.find((m) => m.id === selectedId) || null;
+  const primarySuffix = selectedMeta?.primaryValueTypeCode === "PROS" ? " %" : "";
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    <div className="flex min-h-dvh flex-col">
+      <SiteHeader />
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 lg:px-6">
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <IndicatorSelect
+              options={metas.map((m) => ({ id: m.id, titleFi: m.titleFi }))}
+              value={selectedId}
+              onChange={(id) => setSelectedId(id)}
+              isDisabled={!metas.length}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </div>
+
+          {error ? (
+            <div className="border-destructive/50 bg-destructive/10 text-destructive rounded-md border px-4 py-3">
+              {error}
+            </div>
+          ) : series && selectedMeta ? (
+            series.series.every((p) => p.primaryValue === null && p.absoluteValue === null) ? (
+              <div className="border-border/50 bg-muted/30 text-foreground rounded-md border px-4 py-3">
+                ei dataa valitulle indikaattorille hus-alueella (id 629)
+              </div>
+            ) : (
+              <>
+                <IndicatorKpis
+                  decimals={selectedMeta.decimals}
+                  primarySuffix={primarySuffix}
+                  points={series.series.map((s) => ({ year: s.year, primary: s.primaryValue, absolute: s.absoluteValue }))}
+                />
+                <ChartAreaInteractive
+                  title={selectedMeta.titleFi}
+                  description={`HUS (id 629), ${series.start}–${series.end} • ${selectedMeta.primaryValueTypeFi || ""}`}
+                  decimals={selectedMeta.decimals}
+                  points={series.series.map((s) => ({ year: s.year, primary: s.primaryValue, absolute: s.absoluteValue }))}
+                  yMode={yMode}
+                  onYModeChange={setYMode}
+                  primarySuffix={primarySuffix}
+                />
+              </>
+            )
+          ) : (
+            <div className="text-muted-foreground">{isLoading ? "ladataan…" : "ei dataa"}</div>
+          )}
+
+          {series && selectedMeta ? (
+            <SeriesTable title="Vuosittainen aikasarja" series={series.series} decimals={selectedMeta.decimals} primarySuffix={primarySuffix} />
+          ) : null}
+
+          <AppFooter indicators={metas.map((m) => ({ id: m.id, titleFi: m.titleFi }))} />
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
