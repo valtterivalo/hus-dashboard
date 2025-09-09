@@ -46,5 +46,6 @@ Viittaukset
   3) Hoitohenkilökunnan influenssarokotuskattavuus erikoissairaanhoidossa (ID 5358)
 
 Kuvakaappaus
-- <img width="1671" height="1049" alt="Screenshot 2025-08-04 at 10 28 22" src="https://github.com/user-attachments/assets/d00d36b9-c65e-4da5-a435-bf232d1fafcc" />
+<img width="2934" height="1504" alt="image" src="https://github.com/user-attachments/assets/73ac6017-d237-43a3-9baf-8be86ef8a3d8" />
+
 
